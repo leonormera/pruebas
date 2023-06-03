@@ -8,7 +8,7 @@ group = 'com.capmation'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
-compileJava.options.fork = true
+//compileJava.options.fork = true
 
 //compileOptions {
 //	sourceCompatibility 17
@@ -16,7 +16,7 @@ compileJava.options.fork = true
 //}
 //compileJava.options.forkOptions.executable = '/Library/Java/JavaVirtualMachines/amazon-corretto-11.jdk/Contents/Home/bin/javac'
 
-compileJava.options.forkOptions.executable = '/Users/leonor/Library/CloudStorage/OneDrive-Personal/java/jdk-17.0.6.jdk/Contents/Home/bin/javac'
+//compileJava.options.forkOptions.executable = '/Users/leonor/Library/CloudStorage/OneDrive-Personal/java/jdk-17.0.6.jdk/Contents/Home/bin/javac'
 
 repositories {
 	mavenCentral()
