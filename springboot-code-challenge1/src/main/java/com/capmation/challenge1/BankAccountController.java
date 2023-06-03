@@ -67,8 +67,7 @@ public class BankAccountController {
     private ResponseEntity<BankAccount> putDepositInBankAccount(@PathVariable Long requestedId, @RequestBody DepositRecord depositRecord) {
 		/* TODO
 		 * You need to: 
-		 * 1. Verify the existence of bank account. (Any role can make a deposit
-		 * 
+		 * 1. Verify the existence of bank account. (Any role can make a deposit)
 		 * 2. Update the bank account amount with the given deposit amount.
 		 * 3. Return OK response code (200) to the consumer with the updated resource in the response body.
 		 * 4. If the account was not found return the corresponding HTTP response.
@@ -93,7 +92,7 @@ public class BankAccountController {
     }
 	
 	@PatchMapping("/{requestedId}/withdrawal")
-    private ResponseEntity<Void> putWithdrawalInBankAccount(@PathVariable Long requestedId, @RequestBody WithdrawalRecord withdrawalRecord) {
+    private ResponseEntity<BankAccount> putWithdrawalInBankAccount(@PathVariable Long requestedId, @RequestBody WithdrawalRecord withdrawalRecord, Principal principal) {
 		/* TODO
 		 * You need to: 
 		 * 1. Verify the existence of bank account. (Only the bank account owner is able to perform a withdrawal)
@@ -102,7 +101,27 @@ public class BankAccountController {
 		 * 4. If the account was not found return the corresponding HTTP response. If the user trying to make the withdrawal is not the owner
 		 * then return a not found response as well.
 		 * */
-		return ResponseEntity.badRequest().build();
+		ResponseEntity<BankAccount> resp = null;
+		//1. Verify the existence of bank account. (Only the bank account owner is able to perform a withdrawal)
+		Optional<BankAccount> opt =  bankAccountRepository.findById(requestedId);
+		BankAccount baInicial = opt.get();
+		if (baInicial == null || !baInicial.owner().equalsIgnoreCase(principal.getName())) {
+			//4. If the account was not found return the corresponding HTTP response. If the user trying to make the withdrawal is not the owner
+			// then return a not found response as well.
+			resp = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} else {
+			//2. Update the bank account amount with the given withdrawal amount.
+			if (baInicial.amount() < withdrawalRecord.amount()) {
+				resp = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			} else {
+				BankAccount baAfter = new BankAccount(requestedId, baInicial.amount() - withdrawalRecord.amount(), baInicial.accountType(), baInicial.owner());
+				bankAccountRepository.save(baAfter);
+				//3. Return OK response code (200) to the consumer with the updated resource in the response body.
+				resp = ResponseEntity.ok(baAfter);
+			}
+			
+		}
+		return resp;
     }
 	
 	@PatchMapping("/{requestedId}/tranference")

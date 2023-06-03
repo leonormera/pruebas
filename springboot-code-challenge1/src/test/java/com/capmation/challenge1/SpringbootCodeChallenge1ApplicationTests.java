@@ -119,7 +119,7 @@ class SpringbootCodeChallenge1ApplicationTests {
 
 		HttpEntity<DepositRecord> request2 = new HttpEntity<>(dr, ht);
 
-		ResponseEntity<BankAccount> response2 = restTemplate.exchange("/bankaccounts/{requestedId}/deposit",
+		ResponseEntity<BankAccount> response2 = restTemplate.withBasicAuth("user1", "user1$$pwd").exchange("/bankaccounts/{requestedId}/deposit",
 				HttpMethod.PATCH, request2, BankAccount.class, ba.id());
 
 		assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -131,7 +131,28 @@ class SpringbootCodeChallenge1ApplicationTests {
 	void shouldWithdrawMoneyFromBankAccount() {
 		// TODO: Do a normal withdrawal from one bank account and validate expected new
 		// account amount value
+		// 1.- Create Account
+		BankAccount ba = new BankAccount(1001L, Double.valueOf(500), "SAVINGS", "user1");
+		HttpHeaders ht = new HttpHeaders();
+		ht.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<BankAccount> request = new HttpEntity<>(ba, ht);
 
+		ResponseEntity<Void> response = restTemplate.withBasicAuth("user1", "user1$$pwd").postForEntity("/bankaccounts",
+				request, Void.class);
+		// 2.- Make a withdrawal
+
+		Date fecha = Date.from(LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+
+		WithdrawalRecord wr = new WithdrawalRecord(1002L, Double.valueOf(150), fecha);
+
+		HttpEntity<WithdrawalRecord> request2 = new HttpEntity<>(wr, ht);
+
+		ResponseEntity<BankAccount> response2 = restTemplate.withBasicAuth("user1", "user1$$pwd").exchange("/bankaccounts/{requestedId}/withdrawal",
+				HttpMethod.PATCH, request2, BankAccount.class, ba.id());
+
+		assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		assertThat(ba.amount() - wr.amount() == response2.getBody().amount());
 	}
 
 	@Test
