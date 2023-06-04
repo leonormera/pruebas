@@ -159,6 +159,40 @@ class SpringbootCodeChallenge1ApplicationTests {
 	void shouldTransferMoneyInBankAccount() {
 		// TODO: Do a normal deposit into any bank account and validate expected new
 		// account amount value
+		
+		// 1.- Create Account Origin
+		BankAccount baSource = new BankAccount(1003L, Double.valueOf(200), "SAVINGS", "LMA");
+		HttpHeaders ht = new HttpHeaders();
+		ht.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<BankAccount> requestSource = new HttpEntity<>(baSource, ht);
+
+		ResponseEntity<Void> response = restTemplate.withBasicAuth("user1", "user1$$pwd").postForEntity("/bankaccounts",
+				requestSource, Void.class);
+		
+		// 2.- Create Account Target
+		BankAccount baTarget = new BankAccount(1001L, Double.valueOf(700), "SAVINGS", "LMA");
+		ht.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<BankAccount> requestTarget = new HttpEntity<>(baTarget, ht);
+
+		ResponseEntity<Void> responseTarget = restTemplate.withBasicAuth("user1", "user1$$pwd").postForEntity("/bankaccounts",
+				requestTarget, Void.class);
+		
+		// 2.- Make a transfer
+
+		Date fecha = Date.from(LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+
+		TransferenceRecord dr = new TransferenceRecord(baTarget.id(), Double.valueOf(700), fecha);
+
+		HttpEntity<TransferenceRecord> request2 = new HttpEntity<>(dr, ht);
+
+		ResponseEntity<BankAccount> response2 = restTemplate.withBasicAuth("user1", "user1$$pwd").exchange("/bankaccounts/{requestedId}/tranference",
+				HttpMethod.PATCH, request2, BankAccount.class, baSource.id());
+
+		assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.OK);
+		
+		// Origin validation
+		assertThat(baSource.amount() + dr.amount() == response2.getBody().amount());
+		
 	}
 
 }

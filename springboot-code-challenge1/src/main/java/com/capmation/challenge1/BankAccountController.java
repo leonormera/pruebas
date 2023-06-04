@@ -125,17 +125,53 @@ public class BankAccountController {
     }
 	
 	@PatchMapping("/{requestedId}/tranference")
-    private ResponseEntity<Void> putTransferenceInBankAccount(@PathVariable Long requestedId, @RequestBody TransferenceRecord transferenceRecord) {
+    private ResponseEntity<BankAccount> putTransferenceInBankAccount(@PathVariable Long requestedId, @RequestBody TransferenceRecord transferenceRecord) {
 		/* TODO
 		 * You need to: 
 		 * 1. Verify the existence of bank account. (Only the bank account owner is able to perform a transference)
 		 * 2. Update the bank account amount with the given transference amount.
 		 * 3. Update the destination account to be updated like a normal deposit.
-		 * 3. Return OK response code (200) to the consumer with the updated resource in the response body.
-		 * 4. If the account was not found return the corresponding HTTP response. If the user trying to make the withdrawal is not the owner
+		 * 4. Return OK response code (200) to the consumer with the updated resource in the response body.
+		 * 5. If the account was not found return the corresponding HTTP response. If the user trying to make the withdrawal is not the owner
 		 * then return a not found response as well.
 		 * */
-		return ResponseEntity.badRequest().build();
+		
+		 //* 1. Verify the existence of bank account. (Only the bank account owner is able to perform a transference)		
+
+		
+		ResponseEntity<BankAccount> resp = null;
+		// Origin Account
+		Optional<BankAccount> opt =  bankAccountRepository.findById(requestedId);
+		BankAccount baInicial = opt.get();
+		
+		// Target Account
+		Optional<BankAccount> opt1 =  bankAccountRepository.findById(transferenceRecord.destinationId());
+		BankAccount baTarget = opt1.get();
+		
+		
+		if (baInicial == null) {
+			//5. If the account was not found return the corresponding HTTP response.
+			resp = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} else {
+			// 2. Update the bank account amount with the given transference amount.
+			BankAccount baSourceAfter = new BankAccount(requestedId, baInicial.amount() + transferenceRecord.amount(), baInicial.accountType(), baInicial.owner());
+			bankAccountRepository.save(baSourceAfter);
+			
+			if (baTarget == null) {
+				//5. If the account was not found return the corresponding HTTP response.
+				resp = new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			} else {
+				
+				// 3. Update the destination account to be updated like a normal deposit.
+				BankAccount baTargetAfter = new BankAccount(transferenceRecord.destinationId(), baTarget.amount() + transferenceRecord.amount(), baTarget.accountType(), baTarget.owner());
+				bankAccountRepository.save(baTargetAfter);
+			}
+			//4. Return OK response code (200) to the consumer with the updated resource in the response body.
+			resp = ResponseEntity.ok(baSourceAfter);
+			
+		}		
+				
+		return resp;
     }
 	
 	private BankAccount findBankAccount(Long requestedId, Principal principal) {
